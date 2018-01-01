@@ -1,0 +1,6 @@
+[submodule "LimeSDR_gateware"]
+	path = LimeSDR_gateware
+	url = https://github.com/myriadrf/LimeSDR-USB_GW.git
+[submodule "DDS_core"]
+	path = DDS_core
+	url = https://github.com/spr02/DDS.git
