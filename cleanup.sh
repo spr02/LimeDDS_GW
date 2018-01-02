@@ -1,4 +1,4 @@
-rm -f ddr2_phy0_summary.csv ddr2_phy1_summary.csv ddr2_phy_autodetectedpins.tcl PLLJ_PLLSPE_INFO.txt
+rm -f ddr2_phy0_summary.csv ddr2_phy1_summary.csv ddr2_phy_autodetectedpins.tcl PLLJ_PLLSPE_INFO.txt LimeSDR-USB_lms7_trx.qws
 rm -rf db incremental_db
 
 # remove all generated files in output_files
