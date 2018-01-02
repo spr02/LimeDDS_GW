@@ -1,0 +1,14 @@
+# general (e.g. kate)
+*~
+
+# quartus
+db
+ddr2_phy0_summary.csv
+ddr2_phy1_summary.csv
+ddr2_phy_autodetectedpins.tcl
+incremental_db
+PLLJ_PLLSPE_INFO.txt
+
+# igrnore all output files but the conversion setup file
+output_files/*
+!output_files/rbf_file_setup.cof

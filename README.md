@@ -1,1 +1,1 @@
-# Custom gateware for LimeSDR
+# Custom gateware for the LimeSDR
