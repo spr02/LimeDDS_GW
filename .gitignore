@@ -14,3 +14,4 @@ LimeSDR-USB_lms7_trx.qws
 # igrnore all output files but the conversion setup file
 output_files/*
 !output_files/rbf_file_setup.cof
+!output_files/gen_prg_files.tcl
