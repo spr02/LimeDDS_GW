@@ -8,7 +8,7 @@ ddr2_phy1_summary.csv
 ddr2_phy_autodetectedpins.tcl
 incremental_db
 PLLJ_PLLSPE_INFO.txt
-LimeSDR-USB_lms7_trx.qws
+LimeSDR-USB_lms7_dds_trx.qws
 
 
 # igrnore all output files but the conversion setup file
