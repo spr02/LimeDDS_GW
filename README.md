@@ -8,3 +8,11 @@ This is a custom gateware for the LimeSDR, that includes the [DDS Core](https://
 
 
 ## Run
+
+
+## TODO
+- enable signal for DDS core
+- valid signal for DDS core
+- frequency sweep for DDS core
+- complex multiplier
+- module that generates iq sel signal according to mimo_en and i/q data

@@ -36,7 +36,11 @@ entity ddscfg is
 		------------------------------------------------------------------
 		-------------------- User Signals --------------------------------
 		------------------------------------------------------------------
-		DDSEnablexSO	: out std_logic
+		DDSEnablexSO	: out std_logic;
+		DDSTxSelxSO		: out std_logic;
+		DDSRxSelxSO		: out std_logic;
+		
+		FTW0xDO			: out std_logic_vector(31 downto 0)
 	
 	);
 end ddscfg;
@@ -64,7 +68,6 @@ architecture  arch of ddscfg is
 	signal mem_we								: std_logic;
 	
 	signal oe									: std_logic;							-- Tri state buffers control
-	signal stateo								: std_logic_vector(5 downto 0);			-- State output from mcfg32wm_fsm (not needed??)
 	
 	
 begin
@@ -87,7 +90,7 @@ begin
 		dout_reg_len => dout_reg_len,
 		mem_we => mem_we,
 		oe => oe,
-		stateo => stateo
+		stateo => open
 	);
 	
 	------------------------------------------------------------------------------------------------
@@ -151,7 +154,7 @@ begin
 			-- Load operation
 			elsif dout_reg_len = '1' then
 				case inst_reg(4 downto 0) is	-- mux read-only outputs
-					when "00001" => dout_reg <= x"0002";
+					--when "00001" => dout_reg <= x"0002";
 					when "00010" => dout_reg <= (15 downto 8 => '0') & std_logic_vector(to_unsigned(COMPILE_REV, 8));
 					when "00011" => dout_reg <= "1010101010101010";
 					when others  => dout_reg <= mem(to_integer(unsigned(inst_reg(4 downto 0))));
@@ -236,7 +239,10 @@ begin
 	------------------------------------------------------------------------------------------------
 	--	Output Assignment
 	------------------------------------------------------------------------------------------------
+	DDSEnablexSO	<= mem(1)(0);
+	DDSTxSelxSO		<= mem(1)(1);
+	DDSRxSelxSO		<= mem(1)(2);
 	
-	
+	FTW0xDO			<= mem(4) & mem(5);
 	
 end arch;
