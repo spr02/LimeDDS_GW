@@ -33,8 +33,8 @@ entity txiqmux is
       wfm_diq_h      	: in std_logic_vector(diq_width downto 0);
       wfm_diq_l      	: in std_logic_vector(diq_width downto 0);
 		dds_en				: in std_logic;	-- somewhat weird order, since all enable signals are above, but this way bsf can simply be updated
-		dds_diq_h			: in std_logic_vector(diq_width-1 downto 0);
-		dds_diq_l			: in std_logic_vector(diq_width-1 downto 0);
+		dds_diq_h			: in std_logic_vector(diq_width downto 0);
+		dds_diq_l			: in std_logic_vector(diq_width downto 0);
       diq_h          	: out std_logic_vector(diq_width downto 0);
       diq_l          	: out std_logic_vector(diq_width downto 0)
 
@@ -80,8 +80,8 @@ signal mux3_diq_h          : std_logic_vector(diq_width downto 0);
 signal mux3_diq_l          : std_logic_vector(diq_width downto 0);
 signal mux3_diq_h_reg      : std_logic_vector(diq_width downto 0);
 signal mux3_diq_l_reg      : std_logic_vector(diq_width downto 0);
-signal dds_diq_h_intern		: std_logic_vector(diq_width downto 0);
-signal dds_diq_l_intern		: std_logic_vector(diq_width downto 0);
+--signal dds_diq_h_sync		: std_logic_vector(diq_width downto 0);
+--signal dds_diq_l_sync		: std_logic_vector(diq_width downto 0);
   
 begin
 
@@ -93,6 +93,14 @@ port map(clk, '1', mux_sel, mux_sel_sync);
 
 sync_reg2 : entity work.sync_reg
 port map(clk, '1', dds_en, dds_en_sync);
+
+--bus_sync_reg0 : entity work.bus_sync_reg
+--generic map (13)
+--port map(clk, '1', dds_diq_h, dds_diq_h_sync);
+
+--bus_sync_reg1 : entity work.bus_sync_reg
+--generic map (13)
+--port map(clk, '1', dds_diq_l, dds_diq_l_sync);
 
 
 tst_ptrn_inst0 : entity work.txiq_tst_ptrn
@@ -176,11 +184,9 @@ mux2_diq_l <= mux1_diq_l_reg when test_data_en = '0' else inst1_data_h;
 	 
 -- ----------------------------------------------------------------------------
 -- Mux 3, Mux 2 and DDS data
--- ----------------------------------------------------------------------------  
-dds_diq_h_intern	<= mux2_diq_h_reg(diq_width) & dds_diq_h;
-dds_diq_l_intern  <= mux2_diq_h_reg(diq_width) & dds_diq_l;
-mux3_diq_h <= mux2_diq_h_reg when dds_en_sync = '0' else dds_diq_h_intern;
-mux3_diq_l <= mux2_diq_l_reg when dds_en_sync = '0' else dds_diq_l_intern;
+-- ----------------------------------------------------------------------------
+mux3_diq_h <= mux2_diq_h_reg when dds_en_sync = '0' else dds_diq_h;
+mux3_diq_l <= mux2_diq_l_reg when dds_en_sync = '0' else dds_diq_l;
 
  mux3_reg : process(reset_n, clk)
     begin

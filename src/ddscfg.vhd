@@ -20,27 +20,36 @@ entity ddscfg is
 		------------------------------------------------------------------
 		-- Address and location of this module
 		-- Will be hard wired at the top level
-		maddress			: in  std_logic_vector(9 downto 0);
-		mimo_en			: in  std_logic;	-- MIMO enable, from TOP SPI (always 1)
+		maddress					: in  std_logic_vector(9 downto 0);
+		mimo_en					: in  std_logic;	-- MIMO enable, from TOP SPI (always 1)
 	
 		-- Serial port IOs
-		sdin				: in  std_logic;	-- Data in
-		sclk				: in  std_logic;	-- Data clock
-		sen				: in  std_logic;	-- Enable signal (active low)
-		sdout				: out std_logic;	-- Data out
+		sdin						: in  std_logic;	-- Data in
+		sclk						: in  std_logic;	-- Data clock
+		sen						: in  std_logic;	-- Enable signal (active low)
+		sdout						: out std_logic;	-- Data out
 	
 		-- Signals coming from the pins or top level serial interface
-		lreset			: in std_logic; 	-- Logic reset signal, resets logic cells only  (use only one reset)
-		mreset			: in std_logic; 	-- Memory reset signal, resets configuration memory only (use only one reset)
+		lreset					: in std_logic; 	-- Logic reset signal, resets logic cells only  (use only one reset)
+		mreset					: in std_logic; 	-- Memory reset signal, resets configuration memory only (use only one reset)
 	
 		------------------------------------------------------------------
 		-------------------- User Signals --------------------------------
 		------------------------------------------------------------------
-		DDSEnablexSO	: out std_logic;
-		DDSTxSelxSO		: out std_logic;
-		DDSRxSelxSO		: out std_logic;
+		DDSEnablexSO			: out std_logic;
+		DDSTxSelxSO				: out std_logic;
+		DDSRxSelxSO				: out std_logic;
 		
-		FTW0xDO			: out std_logic_vector(31 downto 0)
+		DDSTaylorEnxSO			: out std_logic;
+		DDSTrDithEnxSO			: out std_logic;
+		DDSPhDithEnxSO			: out std_logic;
+		
+		DDSSweepEnxSO			: out std_logic;
+		DDSSweepUpDownxSO		: out std_logic;
+		
+		DDSSweepRatexDO		: out std_logic_vector(31 downto 0);
+		DDSTopFTWxDO			: out std_logic_vector(31 downto 0);
+		DDSBotFTWxDO			: out std_logic_vector(31 downto 0)
 	
 	);
 end ddscfg;
@@ -155,7 +164,7 @@ begin
 			elsif dout_reg_len = '1' then
 				case inst_reg(4 downto 0) is	-- mux read-only outputs
 					--when "00001" => dout_reg <= x"0002";
-					when "00010" => dout_reg <= (15 downto 8 => '0') & std_logic_vector(to_unsigned(COMPILE_REV, 8));
+					--when "00010" => dout_reg <= (15 downto 8 => '0') & std_logic_vector(to_unsigned(COMPILE_REV, 8));
 					when "00011" => dout_reg <= "1010101010101010";
 					when others  => dout_reg <= mem(to_integer(unsigned(inst_reg(4 downto 0))));
 				end case;
@@ -174,7 +183,7 @@ begin
 	begin
 		-- Defaults
 		if mreset = '0' then	
-			mem(0)	<= "0000000000000000"; -- Version
+			mem(0)	<= "0000000000001001"; -- Version
 			mem(1)	<= "0000000000000000"; -- Control (General, e.g. enable, interpol, dithering, mode)
 			mem(2)	<= "0000000000000000"; -- Control (Further mode specification, i.e. number of sweeps, fmcw mode, FSK mode)
 			mem(3)	<= "0000000000000000"; -- Control (Reserved for future version)
@@ -239,10 +248,20 @@ begin
 	------------------------------------------------------------------------------------------------
 	--	Output Assignment
 	------------------------------------------------------------------------------------------------
-	DDSEnablexSO	<= mem(1)(0);
-	DDSTxSelxSO		<= mem(1)(1);
-	DDSRxSelxSO		<= mem(1)(2);
+	DDSEnablexSO		<= mem(1)(0);
+	DDSTxSelxSO			<= mem(1)(1);
+	DDSRxSelxSO			<= mem(1)(2);
 	
-	FTW0xDO			<= mem(4) & mem(5);
+	DDSTaylorEnxSO		<= mem(2)(0);
+	DDSTrDithEnxSO		<= mem(2)(1);
+	DDSPhDithEnxSO		<= mem(2)(2);
+	
+	DDSSweepEnxSO		<= mem(2)(4);
+	DDSSweepUpDownxSO	<= mem(2)(5);
+	
+	DDSSweepRatexDO	<= mem(20) & mem(21);
+	DDSTopFTWxDO		<= mem(4) & mem(5);
+	DDSBotFTWxDO		<= mem(6) & mem(7);
+	
 	
 end arch;

@@ -50,8 +50,9 @@ entity rx_path_top is
       tx_pct_loss          : in std_logic;
       tx_pct_loss_clr      : in std_logic;
 		
-		dds_en					: in std_logic
-     
+		dds_en					: in std_logic;
+		dds_data_h				: in std_logic_vector(iq_width downto 0);
+      dds_data_l				: in std_logic_vector(iq_width downto 0)
         );
 end rx_path_top;
 
@@ -102,11 +103,11 @@ signal tx_pct_loss_detect     : std_logic;
 
 --dds specific signals
 signal dds_en_sync				: std_logic;
-signal dds_data 					: std_logic_vector(iq_width*4-1 downto 0);
-signal mux_sampl_fifo_wrreq	: std_logic;
-signal mux_sampl_fifo_wdata	: std_logic_vector(iq_width*4-1 downto 0);
-signal mux_sampl_fifo_wrreq_reg: std_logic;
-signal mux_sampl_fifo_wdata_reg: std_logic_vector(iq_width*4-1 downto 0);
+--signal dds_data 					: std_logic_vector(iq_width*4-1 downto 0);
+--signal mux_sampl_fifo_wrreq	: std_logic;
+--signal mux_sampl_fifo_wdata	: std_logic_vector(iq_width*4-1 downto 0);
+--signal mux_sampl_fifo_wrreq_reg: std_logic;
+--signal mux_sampl_fifo_wdata_reg: std_logic_vector(iq_width*4-1 downto 0);
 
 
 begin
@@ -177,6 +178,7 @@ diq2fifo_inst0 : entity work.diq2fifo
       reset_n     => reset_n_sync,
       --Mode settings
 		test_ptrn_en=> test_ptrn_en_sync,
+		dds_en		=> dds_en_sync,
       mode			=> mode_sync, -- JESD207: 1; TRXIQ: 0
 		trxiqpulse	=> trxiqpulse_sync, -- trxiqpulse on: 1; trxiqpulse off: 0
 		ddr_en 		=> ddr_en_sync, -- DDR: 1; SDR: 0
@@ -186,6 +188,9 @@ diq2fifo_inst0 : entity work.diq2fifo
       --Rx interface data 
       DIQ		 	=> DIQ,
 		fsync	 	   => fsync,
+		 --DDS data
+		dds_data_h	=> dds_data_h,
+	   dds_data_l	=> dds_data_l,
       --fifo ports 
       fifo_wfull  => inst1_wrfull,
       fifo_wrreq  => inst0_fifo_wrreq,
@@ -199,25 +204,27 @@ smpl_fifo_wrreq_out <= inst0_fifo_wrreq;
 --TODO: mux for dds_data
 --e.g. dds_data <= chA_I0 & chA_Q0 & chA_I1 & chA_Q1
 -- or dds_data <= cBA_I0 & cBA_Q0 & chA_I0 & chA_Q0
-dds_data <= (others => '0');
+--dds_data <= (others => '0');
 
 --dds_data  <= "011111111111000000000000100000000000000000000000";
   
 --mux_sampl_fifo_wrreq	<= inst0_fifo_wrreq when test_ptrn_en_sync = '0' else NOT inst1_wrfull;
-mux_sampl_fifo_wrreq <= inst0_fifo_wrreq;
-mux_sampl_fifo_wdata <= inst0_fifo_wdata when dds_en_sync = '0' else dds_data;
+--mux_sampl_fifo_wrreq <= inst0_fifo_wrreq;
+--mux_sampl_fifo_wdata <= inst0_fifo_wdata when dds_en_sync = '0' else dds_data;
            
 			  
-p_sync_mux : process(reset_n_sync, clk)
-begin
-	if reset_n_sync = '0' then
-		mux_sampl_fifo_wrreq_reg <= '0';
-		mux_sampl_fifo_wdata_reg <= (others => '0');
-	elsif (clk'event and clk = '1') then
-		mux_sampl_fifo_wrreq_reg <= mux_sampl_fifo_wrreq;
-		mux_sampl_fifo_wdata_reg <= mux_sampl_fifo_wdata;
-	end if;
-end process;
+--p_sync_mux : process(reset_n_sync, clk)
+--begin
+--	if reset_n_sync = '0' then
+--		mux_sampl_fifo_wrreq_reg <= '0';
+--		mux_sampl_fifo_wdata_reg <= (others => '0');
+--	elsif (clk'event and clk = '1') then
+--		mux_sampl_fifo_wrreq_reg <= mux_sampl_fifo_wrreq;
+--		mux_sampl_fifo_wdata_reg <= mux_sampl_fifo_wdata;
+--	end if;
+--end process;
+
+
 			  
 -- ----------------------------------------------------------------------------
 -- FIFO for storing samples
@@ -236,10 +243,10 @@ smpl_fifo_inst1 : entity work.fifo_inst
       --input ports 
       reset_n       => reset_n_sync,
       wrclk         => clk,
-      wrreq			  => mux_sampl_fifo_wrreq_reg,
-		data 			  => mux_sampl_fifo_wdata_reg,
-		--wrreq         => inst0_fifo_wrreq,
-      --data          => inst0_fifo_wdata,
+      --wrreq			  => mux_sampl_fifo_wrreq_reg,
+		--data 			  => mux_sampl_fifo_wdata_reg,
+		wrreq         => inst0_fifo_wrreq,
+      data          => inst0_fifo_wdata,
       wrfull        => inst1_wrfull,
 		wrempty		  => open,
       wrusedw       => open,
@@ -328,8 +335,8 @@ smpl_cnt_inst4 : entity work.smpl_cnt
       sclr        => clr_smpl_nr_sync,
       sload       => ld_smpl_nr_sync,
       data        => smpl_nr_in_sync,
-      --cnt_en      => inst0_fifo_wrreq,
-		cnt_en		=> mux_sampl_fifo_wrreq_reg,
+      cnt_en      => inst0_fifo_wrreq,
+		--cnt_en		=> mux_sampl_fifo_wrreq_reg,
       q           => smpl_nr_cnt        
         );
         
