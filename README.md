@@ -15,7 +15,7 @@ Load the project file in Quartus (lms7_dds_trx.qpf) and then generate the bitstr
 You can either load the bitstream using LimeSuiteGUI or using the command line uitilty:
 
 ```sh
-LimeUtil --fpga=output_files/-USB_lms7_dds_trx_HW_1.4.rbf
+LimeUtil --fpga=output_files/LimeSDR-USB_lms7_dds_trx_HW_1.4.rbf
 ```
 
 
