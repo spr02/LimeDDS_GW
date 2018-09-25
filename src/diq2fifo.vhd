@@ -71,6 +71,8 @@ signal mux1_diq_l			: std_logic_vector (iq_width downto 0);
 signal mux1_diq_h_reg	: std_logic_vector (iq_width downto 0); 
 signal mux1_diq_l_reg	: std_logic_vector (iq_width downto 0);
   
+signal ChannelxSN, ChannelxSP : std_logic_vector(1 downto 0);
+
 begin
 
 inst0_lms7002_ddin : entity work.lms7002_ddin
@@ -100,12 +102,12 @@ inst1_rxiq : entity work.rxiq
       trxiqpulse  => trxiqpulse,
 		ddr_en 		=> ddr_en,
 		mimo_en		=> mimo_en,
-		ch_en			=> ch_en, 
-		fidm			=> fidm,
+		ch_en			=> ch_en,
+		fidm			=> fidm, --tied to zero (in bdf)
 --       DIQ_h		 	=> mux0_diq_h_reg,
 -- 		DIQ_l	 	   => mux0_diq_l_reg,
-		DIQ_h	=> mux1_diq_h_reg,
-		DIQ_l	=> mux1_diq_l_reg,
+		DIQ_h			=> mux1_diq_h_reg,
+		DIQ_l			=> mux1_diq_l_reg,
       fifo_wfull  => fifo_wfull,
       fifo_wrreq  => fifo_wrreq,
       fifo_wdata  => fifo_wdata
@@ -154,13 +156,37 @@ end process;
 --	ClkxCI		=> clk,
 --	RstxRBI	 	=> reset_n,
 --	EnablexSI	=> '1',
---	ArealxDI	=> dds_data_h((iq_width - 1) downto 0),
---	AimagxDI	=> dds_data_l((iq_width - 1) downto 0),
+--	ArealxDI	=> dds_data_l((iq_width - 1) downto 0),
+--	AimagxDI	=> dds_data_h((iq_width - 1) downto 0),
+--	--BrealxDI => std_logic_vector(to_unsigned(1, iq_width)),
+--	--BimagxDI => std_logic_vector(to_unsigned(0, iq_width)),
+----	BrealxDI => dds_data_l((iq_width - 1) downto 0),
+----	BimagxDI	=> dds_data_h((iq_width - 1) downto 0),
 --	BrealxDI	=> mux0_diq_h_reg((iq_width - 1) downto 0),
 --	BimagxDI	=> mux0_diq_l_reg((iq_width - 1) downto 0),
 --	PrealxDO	=> cplx_mul_h,
 --	PimagxDO	=> cplx_mul_l
 --);
+
+
+ChannelxSN <= dds_data_l(dds_data_l'left) & dds_data_h(dds_data_h'left);
+
+DELAY_CHANNEL0 : entity work.DelayLine(rtl)
+	generic map (
+		DELAY_WIDTH		=> 2,
+		DELAY_CYCLES	=> 2
+	)
+	port map(
+		ClkxCI			=> clk,
+		RstxRBI			=> reset_n,
+		EnablexSI		=> '1',
+		InputxDI			=> ChannelxSN,
+		OutputxDO		=> ChannelxSP
+	);
+
+
+--mux1_diq_h <= mux0_diq_h_reg when dds_en = '0' else (ChannelxSP(1) & cplx_mul_h);
+--mux1_diq_l <= mux0_diq_l_reg when dds_en = '0' else (ChannelxSP(0) & cplx_mul_l);
 
 --mux1_diq_h <= mux0_diq_h_reg when dds_en = '0' else (dds_data_h(dds_data_h'left) & cplx_mul_h);
 --mux1_diq_l <= mux0_diq_l_reg when dds_en = '0' else (dds_data_l(dds_data_l'left) & cplx_mul_l);

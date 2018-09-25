@@ -21,38 +21,42 @@ entity rx_path_top is
       pct_buff_wrusedw_w   : integer := 12  --bus width in bits 
       );
    port (
-      clk                  : in std_logic;
-      reset_n              : in std_logic;
-		test_ptrn_en			: in std_logic;
+      clk                  : in  std_logic;
+      reset_n              : in  std_logic;
+		test_ptrn_en			: in  std_logic;
       --Mode settings
-      sample_width         : in std_logic_vector(1 downto 0); --"10"-12bit, "01"-14bit, "00"-16bit;
-      mode			         : in std_logic; -- JESD207: 1; TRXIQ: 0
-		trxiqpulse	         : in std_logic; -- trxiqpulse on: 1; trxiqpulse off: 0
-		ddr_en 		         : in std_logic; -- DDR: 1; SDR: 0
-		mimo_en		         : in std_logic; -- SISO: 1; MIMO: 0
-		ch_en			         : in std_logic_vector(1 downto 0); --"01" - Ch. A, "10" - Ch. B, "11" - Ch. A and Ch. B. 
-		fidm			         : in std_logic; -- External Frame ID mode. Frame start at fsync = 0, when 0. Frame start at fsync = 1, when 1.
+      sample_width         : in  std_logic_vector(1 downto 0); --"10"-12bit, "01"-14bit, "00"-16bit;
+      mode			         : in  std_logic; -- JESD207: 1; TRXIQ: 0
+		trxiqpulse	         : in  std_logic; -- trxiqpulse on: 1; trxiqpulse off: 0
+		ddr_en 		         : in  std_logic; -- DDR: 1; SDR: 0
+		mimo_en		         : in  std_logic; -- SISO: 1; MIMO: 0
+		ch_en			         : in  std_logic_vector(1 downto 0); --"01" - Ch. A, "10" - Ch. B, "11" - Ch. A and Ch. B. 
+		fidm			         : in  std_logic; -- External Frame ID mode. Frame start at fsync = 0, when 0. Frame start at fsync = 1, when 1.
       --Rx interface data 
-      DIQ		 	         : in std_logic_vector(iq_width-1 downto 0);
-		fsync	 	            : in std_logic;
+      DIQ		 	         : in  std_logic_vector(iq_width-1 downto 0);
+		fsync	 	            : in  std_logic;
       --samples
       smpl_fifo_wrreq_out  : out std_logic;
       --Packet fifo ports 
-      pct_fifo_wusedw      : in std_logic_vector(pct_buff_wrusedw_w-1 downto 0);
+      pct_fifo_wusedw      : in  std_logic_vector(pct_buff_wrusedw_w-1 downto 0);
       pct_fifo_wrreq       : out std_logic;
       pct_fifo_wdata       : out std_logic_vector(63 downto 0);
       --sample nr
-      clr_smpl_nr          : in std_logic;
-      ld_smpl_nr           : in std_logic;
-      smpl_nr_in           : in std_logic_vector(63 downto 0);
+      clr_smpl_nr          : in  std_logic;
+      ld_smpl_nr           : in  std_logic;
+      smpl_nr_in           : in  std_logic_vector(63 downto 0);
       smpl_nr_cnt          : out std_logic_vector(63 downto 0);
       --flag control
-      tx_pct_loss          : in std_logic;
-      tx_pct_loss_clr      : in std_logic;
+      tx_pct_loss          : in  std_logic;
+      tx_pct_loss_clr      : in  std_logic;
 		
-		dds_en					: in std_logic;
-		dds_data_h				: in std_logic_vector(iq_width downto 0);
-      dds_data_l				: in std_logic_vector(iq_width downto 0)
+		dds_en					: in  std_logic;
+		dds_data_i				: in  std_logic_vector((iq_width - 1) downto 0);
+      dds_data_q				: in  std_logic_vector((iq_width - 1) downto 0);
+		dds_vld					: in  std_logic;
+		dds_rdy					: out std_logic;
+		
+		mix_en					: in  std_logic
         );
 end rx_path_top;
 
@@ -103,12 +107,45 @@ signal tx_pct_loss_detect     : std_logic;
 
 --dds specific signals
 signal dds_en_sync				: std_logic;
---signal dds_data 					: std_logic_vector(iq_width*4-1 downto 0);
---signal mux_sampl_fifo_wrreq	: std_logic;
---signal mux_sampl_fifo_wdata	: std_logic_vector(iq_width*4-1 downto 0);
---signal mux_sampl_fifo_wrreq_reg: std_logic;
---signal mux_sampl_fifo_wdata_reg: std_logic_vector(iq_width*4-1 downto 0);
 
+signal dds_fifo_rdy				: std_logic;
+signal dds_fifo_valid			: std_logic;
+signal dds_fifo_data 			: std_logic_vector(iq_width*4-1 downto 0);
+
+signal mux0_sampl_fifo_wrreq	: std_logic;
+signal mux0_sampl_fifo_wdata	: std_logic_vector(iq_width*4-1 downto 0);
+signal mux0_sampl_fifo_wrreq_reg: std_logic;
+signal mux0_sampl_fifo_wdata_reg: std_logic_vector(iq_width*4-1 downto 0);
+
+
+--
+signal mix_en_sync	: std_logic;
+signal fifo_rdy		: std_logic;
+signal fifo_val		: std_logic;
+--signal fifo_data		: std_logic_vector(iq_width*4-1 downto 0);
+signal fifo_data		: std_logic_vector(63 downto 0);
+
+signal RxIQRdyxS					: std_logic;
+signal RxIQValxS					: std_logic;
+signal RxIxD						: std_logic_vector(iq_width-1 downto 0);
+signal RxQxD						: std_logic_vector(iq_width-1 downto 0);
+
+signal IQRdyxS					: std_logic;
+signal IQValxS					: std_logic;
+--signal IxD						: std_logic_vector(iq_width-1 downto 0);
+--signal QxD						: std_logic_vector(iq_width-1 downto 0);
+signal IxD						: std_logic_vector(15 downto 0);
+signal QxD						: std_logic_vector(15 downto 0);
+
+
+signal mux1_sampl_fifo_wrreq	: std_logic;
+--signal mux1_sampl_fifo_wdata	: std_logic_vector(iq_width*4-1 downto 0);
+signal mux1_sampl_fifo_wdata	: std_logic_vector(63 downto 0);
+signal mux1_sampl_fifo_wrreq_reg: std_logic;
+--signal mux1_sampl_fifo_wdata_reg: std_logic_vector(iq_width*4-1 downto 0);
+signal mux1_sampl_fifo_wdata_reg: std_logic_vector(63 downto 0);
+
+signal iq_buf_in : std_logic_vector(63 downto 0);
 
 begin
 
@@ -149,6 +186,10 @@ port map(clk, '1', test_ptrn_en, test_ptrn_en_sync);
 sync_reg11 : entity work.sync_reg 
 port map(clk, '1', dds_en, dds_en_sync);
 
+sync_reg12 : entity work.sync_reg 
+port map(clk, '1', mix_en, mix_en_sync);
+
+
 bus_sync_reg0 : entity work.bus_sync_reg
 generic map (2)
 port map(clk, '1', sample_width, sample_width_sync);
@@ -165,9 +206,9 @@ port map(clk, '1', smpl_nr_in, smpl_nr_in_sync);
 
 
 -- ----------------------------------------------------------------------------
--- diq2fifo instance
+-- diq2fifo instance (LMS7002 DIQ -> fifo words)
 -- ----------------------------------------------------------------------------
-diq2fifo_inst0 : entity work.diq2fifo
+	diq2fifo_inst0 : entity work.diq2fifo
    generic map( 
       dev_family				=> dev_family,
       iq_width					=> iq_width,
@@ -178,7 +219,8 @@ diq2fifo_inst0 : entity work.diq2fifo
       reset_n     => reset_n_sync,
       --Mode settings
 		test_ptrn_en=> test_ptrn_en_sync,
-		dds_en		=> dds_en_sync,
+--		dds_en		=> dds_en_sync,
+		dds_en		=> '0',
       mode			=> mode_sync, -- JESD207: 1; TRXIQ: 0
 		trxiqpulse	=> trxiqpulse_sync, -- trxiqpulse on: 1; trxiqpulse off: 0
 		ddr_en 		=> ddr_en_sync, -- DDR: 1; SDR: 0
@@ -189,52 +231,170 @@ diq2fifo_inst0 : entity work.diq2fifo
       DIQ		 	=> DIQ,
 		fsync	 	   => fsync,
 		 --DDS data
-		dds_data_h	=> dds_data_h,
-	   dds_data_l	=> dds_data_l,
+		dds_data_h	=> "0000000000000", --dds_data_h,
+	   dds_data_l	=> "0000000000000", --dds_data_l,
       --fifo ports 
       fifo_wfull  => inst1_wrfull,
       fifo_wrreq  => inst0_fifo_wrreq,
       fifo_wdata  => inst0_fifo_wdata 
-        );
-        
-        
-smpl_fifo_wrreq_out <= inst0_fifo_wrreq; 
+	);
+	
+	smpl_fifo_wrreq_out <= inst0_fifo_wrreq; 
+	
+	
+-- ----------------------------------------------------------------------------
+-- IQ Axis to fifo (DDS loop back)
+-- ---------------------------------------------------------------------------- 
+	dds_iq2fifo_rx0 : entity work.dds_iq2fifo
+	generic map(
+		IQ_WIDTH		=> iq_width
+	)
+	port map(
+		ClkxCI		=> clk,
+		RstxRBI		=> reset_n_sync,
+		IQValxSI		=> dds_vld,
+		IQRdyxSO		=> dds_rdy,
+		IxDI			=> dds_data_i, --dds_data_h(iq_width-1 downto 0),
+		QxDI			=> dds_data_q, --dds_data_l(iq_width-1 downto 0),
+		FifoValxSO	=> dds_fifo_valid,
+		FifoRdyxSI	=> dds_fifo_rdy,
+		FifoQxDO		=> dds_fifo_data
+	);
+	
+	dds_fifo_rdy	<= not inst1_wrfull;
+	
+	
+-- ----------------------------------------------------------------------------
+-- RADAR DSP: fifo -> iq -> fifo 
+-- ---------------------------------------------------------------------------- 
+
+	-- fifo interface to AXIS IQ interface
+	dds_fifo2iq_rx1 : entity work.dds_fifo2iq
+	generic map(
+		IQ_WIDTH		=> iq_width
+	)
+	port map(
+		ClkxCI		=> clk,
+		RstxRBI		=> reset_n_sync,
+		
+		FifoValxSI	=> inst0_fifo_wrreq,
+		FifoRdyxSO	=> open,
+		FifoQxDI		=> inst0_fifo_wdata,
+		
+		IQValxSO		=> RxIQValxS,
+		IQRdyxSI		=> RxIQRdyxS,
+		IxDO			=> RxIxD,
+		QxDO			=> RxQxD
+	);
+	
+	--custom DSP block, used for RADAR specific processing
+	--i.e. in -> fifo -> dc_block -> mix (DDS) -> CIC (downsampling) -> FIR -> DS -> out
+	radar_dsp0 : entity work.radar_dsp
+	generic map(
+		IQ_WIDTH_IN		=> iq_width,
+		IQ_WIDTH_OUT	=> 16
+	)
+	port map(
+		ClkxCI		=> clk,
+		RstxRBI		=> reset_n_sync,
+		-- RX (from LMS7002)
+		RxValxSI		=> RxIQValxS,
+		RxRdyxSO		=> RxIQRdyxS,
+		RxIxDI		=> RxIxD,
+		RxQxDI		=> RxQxD,
+		-- TX (from DDS)
+		TxVldxSI		=> dds_vld,
+		TxRdyxSO		=> open,
+		TxIxDI		=> dds_data_i,
+		TxQxDI		=> dds_data_q,
+		-- DSP output
+		OutValxSO	=> IQValxS,
+		OutRdyxSI	=> IQRdyxS,
+		IxDO			=> IxD,
+		QxDO			=> QxD
+	);
+	
+	-- AXIS IQ interface to fifo interface
+	dds_iq2fifo_rx1 : entity work.dds_iq2fifo
+	generic map(
+		IQ_WIDTH		=> 16 --iq_width
+	)
+	port map(
+		ClkxCI		=> clk,
+		RstxRBI		=> reset_n_sync,
+		IQValxSI		=> IQValxS,
+		IQRdyxSO		=> IQRdyxS,
+		IxDI			=> IxD,
+		QxDI			=> QxD,
+		FifoValxSO	=> fifo_val,
+		FifoRdyxSI	=> fifo_rdy,
+		FifoQxDO		=> fifo_data
+	);
+
+	fifo_rdy <= not inst1_wrfull;
+	
+
+-- ----------------------------------------------------------------------------
+-- MUX0 : DDS loop back or RX (LMS7002)
+-- ---------------------------------------------------------------------------- 
 
 
---TODO: mux for dds_data
---e.g. dds_data <= chA_I0 & chA_Q0 & chA_I1 & chA_Q1
--- or dds_data <= cBA_I0 & cBA_Q0 & chA_I0 & chA_Q0
---dds_data <= (others => '0');
+	mux0_sampl_fifo_wrreq <= inst0_fifo_wrreq when dds_en_sync = '0' else dds_fifo_valid and dds_fifo_rdy;
+	mux0_sampl_fifo_wdata <= inst0_fifo_wdata when dds_en_sync = '0' else dds_fifo_data;
+				  
+				  
+	p_sync_mux0 : process(reset_n_sync, clk)
+	begin
+		if reset_n_sync = '0' then
+			mux0_sampl_fifo_wrreq_reg <= '0';
+			mux0_sampl_fifo_wdata_reg <= (others => '0');
+		elsif (clk'event and clk = '1') then
+			mux0_sampl_fifo_wrreq_reg <= mux0_sampl_fifo_wrreq;
+			mux0_sampl_fifo_wdata_reg <= mux0_sampl_fifo_wdata;
+		end if;
+	end process;
 
---dds_data  <= "011111111111000000000000100000000000000000000000";
-  
---mux_sampl_fifo_wrreq	<= inst0_fifo_wrreq when test_ptrn_en_sync = '0' else NOT inst1_wrfull;
---mux_sampl_fifo_wrreq <= inst0_fifo_wrreq;
---mux_sampl_fifo_wdata <= inst0_fifo_wdata when dds_en_sync = '0' else dds_data;
-           
-			  
---p_sync_mux : process(reset_n_sync, clk)
---begin
---	if reset_n_sync = '0' then
---		mux_sampl_fifo_wrreq_reg <= '0';
---		mux_sampl_fifo_wdata_reg <= (others => '0');
---	elsif (clk'event and clk = '1') then
---		mux_sampl_fifo_wrreq_reg <= mux_sampl_fifo_wrreq;
---		mux_sampl_fifo_wdata_reg <= mux_sampl_fifo_wdata;
---	end if;
---end process;
+iq_buf_in <= 	mux0_sampl_fifo_wdata_reg(47 downto 36) & "0000" & 
+					mux0_sampl_fifo_wdata_reg(35 downto 24) & "0000" & 
+					mux0_sampl_fifo_wdata_reg(23 downto 12) & "0000" & 
+					mux0_sampl_fifo_wdata_reg(11 downto 0) & "0000";
 
+--mux0_sampl_fifo_wrreq_reg	<= dds_fifo_valid and dds_fifo_rdy;
+--mux0_sampl_fifo_wdata_reg	<= dds_fifo_data;
 
+	
+	
+-- ----------------------------------------------------------------------------
+-- MUX1 : RADAR DSP or MUX0
+-- ---------------------------------------------------------------------------- 
+	
+	mux1_sampl_fifo_wrreq <= mux0_sampl_fifo_wrreq_reg when mix_en_sync = '0' else fifo_val and fifo_rdy;
+--	mux1_sampl_fifo_wdata <= mux0_sampl_fifo_wdata_reg when mix_en_sync = '0' else fifo_data;
+	mux1_sampl_fifo_wdata <= iq_buf_in when mix_en_sync = '0' else fifo_data;
+				  
+				  
+	p_sync_mux1 : process(reset_n_sync, clk)
+	begin
+		if reset_n_sync = '0' then
+			mux1_sampl_fifo_wrreq_reg <= '0';
+			mux1_sampl_fifo_wdata_reg <= (others => '0');
+		elsif (clk'event and clk = '1') then
+			mux1_sampl_fifo_wrreq_reg <= mux1_sampl_fifo_wrreq;
+			mux1_sampl_fifo_wdata_reg <= mux1_sampl_fifo_wdata;
+		end if;
+	end process;
 			  
 -- ----------------------------------------------------------------------------
 -- FIFO for storing samples
--- ----------------------------------------------------------------------------       
+-- ----------------------------------------------------------------------------     
+
+  
 smpl_fifo_inst1 : entity work.fifo_inst
   generic map(
       dev_family	    => dev_family, 
-      wrwidth         => (iq_width*4),
+      wrwidth         => 64,--(iq_width*4),
       wrusedw_witdth  => smpl_buff_rdusedw_w,
-      rdwidth         => (iq_width*4),
+      rdwidth         => 64,--(iq_width*4),
       rdusedw_width   => smpl_buff_rdusedw_w,
       show_ahead      => "OFF"
   ) 
@@ -243,25 +403,23 @@ smpl_fifo_inst1 : entity work.fifo_inst
       --input ports 
       reset_n       => reset_n_sync,
       wrclk         => clk,
-      --wrreq			  => mux_sampl_fifo_wrreq_reg,
-		--data 			  => mux_sampl_fifo_wdata_reg,
-		wrreq         => inst0_fifo_wrreq,
-      data          => inst0_fifo_wdata,
+      wrreq			  => mux1_sampl_fifo_wrreq_reg,
+		data 			  => mux1_sampl_fifo_wdata_reg,
       wrfull        => inst1_wrfull,
 		wrempty		  => open,
       wrusedw       => open,
       rdclk 	     => clk,
       rdreq         => inst2_smpl_buff_rdreq,
-      q             => inst1_q,
+      q             => inst2_smpl_buff_rddata, --inst1_q,
       rdempty       => open,
       rdusedw       => inst1_rdusedw  
         );
  
 --samples are placed to MSb LSb ar filled with zeros 
-inst2_smpl_buff_rddata <=  inst1_q(47 downto 36) & "0000" & 
-                           inst1_q(35 downto 24) & "0000" & 
-                           inst1_q(23 downto 12) & "0000" & 
-                           inst1_q(11 downto 0) & "0000";
+--inst2_smpl_buff_rddata <=  inst1_q(47 downto 36) & "0000" & 
+--                           inst1_q(35 downto 24) & "0000" & 
+--                           inst1_q(23 downto 12) & "0000" & 
+--                           inst1_q(11 downto 0) & "0000";
     
     
 --packet reserved bits  
@@ -315,7 +473,7 @@ smpl_cnt_inst3 : entity work.smpl_cnt
       cnt_en      => inst2_smpl_buff_rdreq,
       q           => inst3_q        
         );
-		  
+
 -- ----------------------------------------------------------------------------
 -- Instance for sample counter
 -- ----------------------------------------------------------------------------        
@@ -359,7 +517,7 @@ begin
    end if;
 end process;
         
- inst2_pct_hdr_1 <=  delay_chain(5);      
+inst2_pct_hdr_1 <=  delay_chain(5);      
   
 end arch;   
 

@@ -44,12 +44,19 @@ entity ddscfg is
 		DDSTrDithEnxSO			: out std_logic;
 		DDSPhDithEnxSO			: out std_logic;
 		
+		DDSScaleOutxSO			: out std_logic_vector(7 downto 0);
+		
 		DDSSweepEnxSO			: out std_logic;
 		DDSSweepUpDownxSO		: out std_logic;
 		
 		DDSSweepRatexDO		: out std_logic_vector(31 downto 0);
 		DDSTopFTWxDO			: out std_logic_vector(31 downto 0);
-		DDSBotFTWxDO			: out std_logic_vector(31 downto 0)
+		DDSBotFTWxDO			: out std_logic_vector(31 downto 0);
+		
+		DDSTxValidInvxSO		: out std_logic;
+		DDSRxValidInvxSO		: out std_logic;
+		
+		DDSMixEnxSO				: out std_logic
 	
 	);
 end ddscfg;
@@ -165,7 +172,7 @@ begin
 				case inst_reg(4 downto 0) is	-- mux read-only outputs
 					--when "00001" => dout_reg <= x"0002";
 					--when "00010" => dout_reg <= (15 downto 8 => '0') & std_logic_vector(to_unsigned(COMPILE_REV, 8));
-					when "00011" => dout_reg <= "1010101010101010";
+					--when "00011" => dout_reg <= "1010101010101010";
 					when others  => dout_reg <= mem(to_integer(unsigned(inst_reg(4 downto 0))));
 				end case;
 			end if;			      
@@ -251,6 +258,7 @@ begin
 	DDSEnablexSO		<= mem(1)(0);
 	DDSTxSelxSO			<= mem(1)(1);
 	DDSRxSelxSO			<= mem(1)(2);
+	DDSMixEnxSO			<= mem(1)(4);
 	
 	DDSTaylorEnxSO		<= mem(2)(0);
 	DDSTrDithEnxSO		<= mem(2)(1);
@@ -258,6 +266,11 @@ begin
 	
 	DDSSweepEnxSO		<= mem(2)(4);
 	DDSSweepUpDownxSO	<= mem(2)(5);
+	
+	DDSScaleOutxSO		<= mem(2)(15 downto 8);
+	
+	DDSTxValidInvxSO	<= mem(3)(0);
+	DDSRxValidInvxSO	<= mem(3)(1);
 	
 	DDSSweepRatexDO	<= mem(20) & mem(21);
 	DDSTopFTWxDO		<= mem(4) & mem(5);

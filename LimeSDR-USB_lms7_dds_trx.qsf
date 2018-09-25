@@ -798,6 +798,16 @@ set_global_assignment -name SEARCH_PATH LimeSDR_gateware/symbols/
 set_global_assignment -name TIMEQUEST_MULTICORNER_ANALYSIS ON
 set_global_assignment -name SMART_RECOMPILE ON
 
+
+
+
+set_global_assignment -name VHDL_FILE src/dsp_radar/cplx_mul.vhd
+set_global_assignment -name VHDL_FILE src/iq_iface/dds_iqfifo.vhd
+set_global_assignment -name VHDL_FILE src/dsp_radar/dc_removal.vhd
+set_global_assignment -name VHDL_FILE src/dsp_radar/radar_dsp_top.vhd
+set_global_assignment -name VHDL_FILE src/iq_iface/dds_iq2fifo.vhd
+set_global_assignment -name VHDL_FILE src/iq_iface/dds_fifo2iq.vhd
+set_global_assignment -name VHDL_FILE src/tx_path_top.vhd
 set_global_assignment -name VHDL_FILE src/cplx_mul.vhd
 set_global_assignment -name VHDL_FILE src/txiqmux.vhd
 set_global_assignment -name VHDL_FILE src/diq2fifo.vhd
@@ -826,7 +836,6 @@ set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/tx_pll_top/synth/tx_p
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/rx_pll_top/synth/rx_pll_top.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/altera_inst/lms7002_ddout.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/tx_path_top/handshake_sync/synth/handshake_sync.vhd
-set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/tx_path_top/tx_path/synth/tx_path_top.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/tx_path_top/tx_path/synth/sync_fifo_rw.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/tx_path_top/packets2data/synth/packets2data_top.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/tx_path_top/packets2data/synth/packets2data.vhd
@@ -930,7 +939,4 @@ set_global_assignment -name BDF_FILE LimeSDR_gateware/symbols/pll_block_rx.bdf
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/general/sync_reg.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/general/gpio_ctrl.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/spi/periphcfg.vhd
-
-
-
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

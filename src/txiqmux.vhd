@@ -91,8 +91,9 @@ port map(clk, '1', test_ptrn_en, test_ptrn_en_sync);
 sync_reg1 : entity work.sync_reg
 port map(clk, '1', mux_sel, mux_sel_sync);
 
-sync_reg2 : entity work.sync_reg
-port map(clk, '1', dds_en, dds_en_sync);
+--sync_reg2 : entity work.sync_reg
+--port map(clk, '1', dds_en, dds_en_sync);
+dds_en_sync <= '0'; --tied to zero for now!
 
 --bus_sync_reg0 : entity work.bus_sync_reg
 --generic map (13)
