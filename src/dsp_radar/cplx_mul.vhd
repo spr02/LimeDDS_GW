@@ -26,7 +26,8 @@ entity cplx_mul is
 		generic(
 			A_WIDTH		: integer := 12;
 			B_WIDTH		: integer := 12;
-			P_WIDTH		: integer := 16
+			P_WIDTH		: integer := 16;
+			FSR_SHIFT	: integer := 0
 		);
 		port(
 			ClkxCI		: in	std_logic;
@@ -300,11 +301,11 @@ begin
 			if (IQEnAddxS = '1') then
 				-- real part
 				v_p_real := resize(AiBixDP, v_p_real'length) - resize(AqBqxDP, v_p_real'length);
-				ResIxDP <= std_logic_vector(v_p_real(v_p_real'high downto v_p_real'high - PrealxDP'length + 1));
+				ResIxDP <= std_logic_vector(v_p_real(v_p_real'high - FSR_SHIFT downto v_p_real'high - FSR_SHIFT - PrealxDP'length + 1));
 -- 				PrealxDP <= std_logic_vector(v_p_real(v_p_real'high downto v_p_real'high - PrealxDP'length + 1));
 				--imaginary part
 				v_p_imag := resize(AiBqxDP, v_p_imag'length) + resize(AqBixDP, v_p_imag'length);
-				ResQxDP <= std_logic_vector(v_p_imag(v_p_imag'high downto v_p_imag'high - PrealxDP'length + 1));
+				ResQxDP <= std_logic_vector(v_p_imag(v_p_imag'high - FSR_SHIFT downto v_p_imag'high - FSR_SHIFT - PrealxDP'length + 1));
 -- 				PimagxDP <= std_logic_vector(v_p_imag(v_p_imag'high downto v_p_imag'high - PrealxDP'length + 1));
 			end if;
 		end if;
