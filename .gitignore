@@ -9,9 +9,24 @@ ddr2_phy_autodetectedpins.tcl
 incremental_db
 PLLJ_PLLSPE_INFO.txt
 LimeSDR-USB_lms7_dds_trx.qws
+*.rpt
+*.ddb
+*.qdf
+greybox_tmp
+.qsys_edit
+*.qsys
+*.sopcinfo
 
 
 # igrnore all output files but the conversion setup file
 output_files/*
 !output_files/rbf_file_setup.cof
 !output_files/gen_prg_files.tcl
+
+# ghdl and gtkwave
+*.o
+*.fst
+*.cf
+
+# ignore local backup files
+*.bak
