@@ -4,9 +4,9 @@
 	ignore = untracked
 [submodule "src/DDS"]
 	path = src/DDS
-	url = git@github.com:spr02/DDS.git
+	url = https://github.com/spr02/DDS.git
 	ignore = untracked
 [submodule "src/CICDecimator"]
 	path = src/CICDecimator
-	url = git@github.com:spr02/CICDecimator.git
+	url = https://github.com/spr02/CICDecimator.git
 	ignore = untracked
