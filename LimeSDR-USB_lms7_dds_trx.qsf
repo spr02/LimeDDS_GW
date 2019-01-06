@@ -800,15 +800,17 @@ set_global_assignment -name SMART_RECOMPILE ON
 
 
 
-
+set_global_assignment -name VHDL_FILE src/CICDecimator/hdl/integrator.vhd
+set_global_assignment -name VHDL_FILE src/CICDecimator/hdl/downsampler.vhd
+set_global_assignment -name VHDL_FILE src/CICDecimator/hdl/differentiator.vhd
+set_global_assignment -name VHDL_FILE src/CICDecimator/hdl/cic_decimator.vhd
 set_global_assignment -name VHDL_FILE src/dsp_radar/cplx_mul.vhd
 set_global_assignment -name VHDL_FILE src/iq_iface/dds_iqfifo.vhd
 set_global_assignment -name VHDL_FILE src/dsp_radar/dc_removal.vhd
-set_global_assignment -name VHDL_FILE src/dsp_radar/radar_dsp_top.vhd
 set_global_assignment -name VHDL_FILE src/iq_iface/dds_iq2fifo.vhd
 set_global_assignment -name VHDL_FILE src/iq_iface/dds_fifo2iq.vhd
+set_global_assignment -name VHDL_FILE src/dsp_radar/radar_dsp_top.vhd
 set_global_assignment -name VHDL_FILE src/tx_path_top.vhd
-set_global_assignment -name VHDL_FILE src/cplx_mul.vhd
 set_global_assignment -name VHDL_FILE src/txiqmux.vhd
 set_global_assignment -name VHDL_FILE src/diq2fifo.vhd
 set_global_assignment -name VHDL_FILE src/dds_wrapper.vhd
