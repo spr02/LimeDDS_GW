@@ -56,6 +56,8 @@ entity rx_path_top is
 		dds_vld					: in  std_logic;
 		dds_rdy					: out std_logic;
 		
+		dds_swp_sync			: in  std_logic;
+		
 		mix_en					: in  std_logic
         );
 end rx_path_top;
@@ -121,7 +123,7 @@ signal mux0_sampl_fifo_wdata_reg: std_logic_vector(iq_width*4-1 downto 0);
 --
 signal mix_en_sync	: std_logic;
 signal fifo_rdy		: std_logic;
-signal fifo_val		: std_logic;
+signal fifo_vld		: std_logic;
 --signal fifo_data		: std_logic_vector(iq_width*4-1 downto 0);
 signal fifo_data		: std_logic_vector(63 downto 0);
 
@@ -138,6 +140,9 @@ signal IxD						: std_logic_vector(15 downto 0);
 signal QxD						: std_logic_vector(15 downto 0);
 
 
+signal mux2_wdata : std_logic_vector(63 downto 0);
+signal mux2_wrreq : std_logic;
+
 signal mux1_sampl_fifo_wrreq	: std_logic;
 --signal mux1_sampl_fifo_wdata	: std_logic_vector(iq_width*4-1 downto 0);
 signal mux1_sampl_fifo_wdata	: std_logic_vector(63 downto 0);
@@ -146,7 +151,8 @@ signal mux1_sampl_fifo_wrreq_reg: std_logic;
 signal mux1_sampl_fifo_wdata_reg: std_logic_vector(63 downto 0);
 
 signal iq_buf_in : std_logic_vector(63 downto 0);
-
+signal dds_swp_sync_sync : std_logic;
+signal dds_swp_sync_hold : std_logic;
 begin
 
 
@@ -186,9 +192,11 @@ port map(clk, '1', test_ptrn_en, test_ptrn_en_sync);
 sync_reg11 : entity work.sync_reg 
 port map(clk, '1', dds_en, dds_en_sync);
 
-sync_reg12 : entity work.sync_reg 
-port map(clk, '1', mix_en, mix_en_sync);
+sync_reg12 : entity work.sync_reg
+port map(clk, '1', dds_swp_sync, dds_swp_sync_sync);
 
+sync_reg13 : entity work.sync_reg 
+port map(clk, '1', mix_en, mix_en_sync);
 
 bus_sync_reg0 : entity work.bus_sync_reg
 generic map (2)
@@ -310,6 +318,7 @@ port map(clk, '1', smpl_nr_in, smpl_nr_in_sync);
 		-- DSP output
 		OutValxSO	=> IQValxS,
 		OutRdyxSI	=> IQRdyxS,
+		--OutRdyxSI	=> '1',
 		IxDO			=> IxD,
 		QxDO			=> QxD
 	);
@@ -326,7 +335,7 @@ port map(clk, '1', smpl_nr_in, smpl_nr_in_sync);
 		IQRdyxSO		=> IQRdyxS,
 		IxDI			=> IxD,
 		QxDI			=> QxD,
-		FifoValxSO	=> fifo_val,
+		FifoValxSO	=> fifo_vld,
 		FifoRdyxSI	=> fifo_rdy,
 		FifoQxDO		=> fifo_data
 	);
@@ -366,12 +375,65 @@ iq_buf_in <= 	mux0_sampl_fifo_wdata_reg(47 downto 36) & "0000" &
 	
 -- ----------------------------------------------------------------------------
 -- MUX1 : RADAR DSP or MUX0
--- ---------------------------------------------------------------------------- 
-	
-	mux1_sampl_fifo_wrreq <= mux0_sampl_fifo_wrreq_reg when mix_en_sync = '0' else fifo_val and fifo_rdy;
+-- ----------------------------------------------------------------------------
 --	mux1_sampl_fifo_wdata <= mux0_sampl_fifo_wdata_reg when mix_en_sync = '0' else fifo_data;
-	mux1_sampl_fifo_wdata <= iq_buf_in when mix_en_sync = '0' else fifo_data;
-				  
+	
+	hold_inst : entity work.hold
+	generic map(
+		HOLD_CC => 2
+	)
+	port map(
+		ClkxCI	=> clk,
+		RstxRBI	=> reset_n_sync,
+		TrigxSI	=> dds_swp_sync_sync,
+		HoldxSO	=> dds_swp_sync_hold
+	);
+	
+	p_sync_mux : process(clk, reset_n_sync)
+	begin
+		if reset_n_sync = '0' then
+			mux2_wdata <= (others => '0');
+			mux2_wrreq <= '0';
+		elsif rising_edge(clk) then
+			if mix_en_sync = '0' then
+				mux2_wdata <= iq_buf_in;
+				mux2_wrreq <= mux0_sampl_fifo_wrreq_reg;
+			else
+				mux2_wdata <= fifo_data;
+				mux2_wrreq <= fifo_vld and fifo_rdy;
+			end if;
+		end if;
+	end process;
+	
+--	p_comb_sync_header : process(dds_swp_sync_hold, iq_buf_in, fifo_data, mix_en_sync, fifo_vld, fifo_rdy, mux0_sampl_fifo_wrreq_reg, inst1_wrfull)
+--	begin
+--		if dds_swp_sync_hold = '1' then
+--			mux1_sampl_fifo_wdata <= x"7FFF7FFF7FFF7FFF";
+--			mux1_sampl_fifo_wrreq <= not inst1_wrfull;
+--		else
+--			if mix_en_sync = '0' then
+--				mux1_sampl_fifo_wdata <= iq_buf_in;
+--				mux1_sampl_fifo_wrreq <= mux0_sampl_fifo_wrreq_reg;
+--			else
+--				mux1_sampl_fifo_wdata <= fifo_data;
+--				mux1_sampl_fifo_wrreq <= fifo_vld and fifo_rdy;
+--			end if;
+--		end if;
+--	end process;
+
+	p_comb_sync_header : process(dds_swp_sync_hold, mux2_wdata, mux2_wrreq)
+	begin
+		if dds_swp_sync_hold = '1' then
+			mux1_sampl_fifo_wrreq <= '1';
+			mux1_sampl_fifo_wdata <= x"000B7FFF000B7FFF";
+		else
+			mux1_sampl_fifo_wrreq <= mux2_wrreq;
+			mux1_sampl_fifo_wdata <= mux2_wdata;
+		end if;
+	end process;
+
+--	mux1_sampl_fifo_wrreq <= mux0_sampl_fifo_wrreq_reg when mix_en_sync = '0' else fifo_vld and fifo_rdy;
+--	mux1_sampl_fifo_wdata <= iq_buf_in when mix_en_sync = '0' else fifo_data;
 				  
 	p_sync_mux1 : process(reset_n_sync, clk)
 	begin

@@ -800,6 +800,8 @@ set_global_assignment -name SMART_RECOMPILE ON
 
 
 
+
+set_global_assignment -name VHDL_FILE src/hold.vhd
 set_global_assignment -name VHDL_FILE src/CICDecimator/hdl/integrator.vhd
 set_global_assignment -name VHDL_FILE src/CICDecimator/hdl/downsampler.vhd
 set_global_assignment -name VHDL_FILE src/CICDecimator/hdl/differentiator.vhd

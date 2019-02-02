@@ -50,6 +50,7 @@ entity dds_wrapper is
 		SweepEnxSI			: in  std_logic;
 		SweepUpDonwxSI		: in  std_logic;
 		SweepRatexDI		: in  std_logic_vector((PHASE_WIDTH - 1) downto 0);
+		SweepSyncxSO		: out std_logic;
 		
 		TopFTWxDI			: in  std_logic_vector((PHASE_WIDTH - 1) downto 0);		
 		BotFTWxDI			: in  std_logic_vector((PHASE_WIDTH - 1) downto 0);
@@ -208,6 +209,7 @@ begin
 		SweepEnxSI			=> SyncSweepEnxS,
 		SweepUpDownxSI		=> SyncSweepUpDownxS,
 		SweepRatexDI		=> SyncSweepRatexD,
+		SweepSyncxSO		=> SweepSyncxSO,
 		TopFTWxDI			=> SyncTopFTWxD,
 		BotFTWxDI			=> SyncBotFTWxD,
 --		FTWxDI				=> SyncBotFTWxD,
