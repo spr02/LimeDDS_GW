@@ -216,7 +216,7 @@ port map(clk, '1', smpl_nr_in, smpl_nr_in_sync);
 -- ----------------------------------------------------------------------------
 -- diq2fifo instance (LMS7002 DIQ -> fifo words)
 -- ----------------------------------------------------------------------------
-	diq2fifo_inst0 : entity work.diq2fifo
+diq2fifo_inst0 : entity work.diq2fifo
    generic map( 
       dev_family				=> dev_family,
       iq_width					=> iq_width,
@@ -227,8 +227,6 @@ port map(clk, '1', smpl_nr_in, smpl_nr_in_sync);
       reset_n     => reset_n_sync,
       --Mode settings
 		test_ptrn_en=> test_ptrn_en_sync,
---		dds_en		=> dds_en_sync,
-		dds_en		=> '0',
       mode			=> mode_sync, -- JESD207: 1; TRXIQ: 0
 		trxiqpulse	=> trxiqpulse_sync, -- trxiqpulse on: 1; trxiqpulse off: 0
 		ddr_en 		=> ddr_en_sync, -- DDR: 1; SDR: 0
@@ -238,18 +236,16 @@ port map(clk, '1', smpl_nr_in, smpl_nr_in_sync);
       --Rx interface data 
       DIQ		 	=> DIQ,
 		fsync	 	   => fsync,
-		 --DDS data
-		dds_data_h	=> "0000000000000", --dds_data_h,
-	   dds_data_l	=> "0000000000000", --dds_data_l,
       --fifo ports 
       fifo_wfull  => inst1_wrfull,
       fifo_wrreq  => inst0_fifo_wrreq,
       fifo_wdata  => inst0_fifo_wdata 
-	);
+        );
 	
 	smpl_fifo_wrreq_out <= inst0_fifo_wrreq; 
 	
 	
+
 -- ----------------------------------------------------------------------------
 -- IQ Axis to fifo (DDS loop back)
 -- ---------------------------------------------------------------------------- 
