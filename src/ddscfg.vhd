@@ -15,6 +15,7 @@ use work.revisions.all;
 
 entity ddscfg is
 	port (
+		ClkxCI					: in std_logic;
 		------------------------------------------------------------------
 		-------------------- Lime Signals --------------------------------
 		------------------------------------------------------------------
@@ -53,8 +54,8 @@ entity ddscfg is
 		DDSTopFTWxDO			: out std_logic_vector(31 downto 0);
 		DDSBotFTWxDO			: out std_logic_vector(31 downto 0);
 		
-		DDSTxValidInvxSO		: out std_logic;
-		DDSRxValidInvxSO		: out std_logic;
+-- 		DDSTxValidInvxSO		: out std_logic;
+-- 		DDSRxValidInvxSO		: out std_logic;
 		
 		DDSMixEnxSO				: out std_logic
 	
@@ -208,7 +209,7 @@ begin
 			mem(15)	<= "0000000000000000"; -- P1.L
 			mem(16)	<= "0000000000000000"; -- P2.H (phase offset 2)
 			mem(17)	<= "0000000000000000"; -- P2.L
-			mem(18)  <= "0000000000000000"; -- P3.H (phase offset 3)
+			mem(18)	<= "0000000000000000"; -- P3.H (phase offset 3)
 			mem(19)	<= "0000000000000000"; -- P3.L
 			mem(20)	<= "0000000000000000"; -- R.H (sweep rate)
 			mem(21)	<= "0000000000000000"; -- R.L
@@ -255,26 +256,58 @@ begin
 	------------------------------------------------------------------------------------------------
 	--	Output Assignment
 	------------------------------------------------------------------------------------------------
+	sync_reg1 : entity work.sync_reg
+	port map (ClkxCI, '1', mem(2)(0), DDSTaylorEnxSO);
+	
+	sync_reg2 : entity work.sync_reg
+	port map (ClkxCI, '1', mem(2)(1), DDSTrDithEnxSO);
+	
+	sync_reg3 : entity work.sync_reg
+	port map (ClkxCI, '1', mem(2)(2), DDSPhDithEnxSO);
+	
+	sync_reg4 : entity work.sync_reg
+	port map (ClkxCI, '1', mem(2)(4), DDSSweepEnxSO);
+	
+	sync_reg5 : entity work.sync_reg
+	port map (ClkxCI, '1', mem(2)(5), DDSSweepUpDownxSO);	
+	
+	bus_sync_reg0 : entity work.bus_sync_reg
+	generic map (32)
+	port map(ClkxCI, '1', mem(20) & mem(21), DDSSweepRatexDO);
+	
+	bus_sync_reg1 : entity work.bus_sync_reg
+	generic map (32)
+	port map(ClkxCI, '1', mem(4) & mem(5), DDSTopFTWxDO);
+	
+	bus_sync_reg2 : entity work.bus_sync_reg
+	generic map (32)
+	port map(ClkxCI, '1', mem(6) & mem(7), DDSBotFTWxDO);
+	
+	bus_sync_reg3 : entity work.bus_sync_reg
+	generic map(8)
+	port map(ClkxCI, '1', mem(2)(15 downto 8), DDSScaleOutxSO);
+	
+	
+	
+-- 	DDSTaylorEnxSO		<= mem(2)(0);
+-- 	DDSTrDithEnxSO		<= mem(2)(1);
+-- 	DDSPhDithEnxSO		<= mem(2)(2);
+-- 	
+-- 	DDSSweepEnxSO		<= mem(2)(4);
+-- 	DDSSweepUpDownxSO	<= mem(2)(5);
+-- 	
+-- 	DDSScaleOutxSO		<= mem(2)(15 downto 8);
+-- 	
+-- 	DDSTxValidInvxSO	<= mem(3)(0);
+-- 	DDSRxValidInvxSO	<= mem(3)(1);
+-- 	
+-- 	DDSSweepRatexDO	<= mem(20) & mem(21);
+-- 	DDSTopFTWxDO		<= mem(4) & mem(5);
+-- 	DDSBotFTWxDO		<= mem(6) & mem(7);
+	
 	DDSEnablexSO		<= mem(1)(0);
 	DDSTxSelxSO			<= mem(1)(1);
 	DDSRxSelxSO			<= mem(1)(2);
 	DDSMixEnxSO			<= mem(1)(4);
-	
-	DDSTaylorEnxSO		<= mem(2)(0);
-	DDSTrDithEnxSO		<= mem(2)(1);
-	DDSPhDithEnxSO		<= mem(2)(2);
-	
-	DDSSweepEnxSO		<= mem(2)(4);
-	DDSSweepUpDownxSO	<= mem(2)(5);
-	
-	DDSScaleOutxSO		<= mem(2)(15 downto 8);
-	
-	DDSTxValidInvxSO	<= mem(3)(0);
-	DDSRxValidInvxSO	<= mem(3)(1);
-	
-	DDSSweepRatexDO	<= mem(20) & mem(21);
-	DDSTopFTWxDO		<= mem(4) & mem(5);
-	DDSBotFTWxDO		<= mem(6) & mem(7);
-	
 	
 end arch;

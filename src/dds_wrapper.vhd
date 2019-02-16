@@ -6,11 +6,28 @@
 -- REVISIONS:	
 -- ----------------------------------------------------------------------------	
 
+library IEEE;
+use IEEE.STD_LOGIC_1164.all;
+use IEEE.NUMERIC_STD.all;
+use work.helper_util.all;
+
+package dds_pkg is
+	type t_dds_ctl is record
+		en			: std_logic;
+		mix_en		: std_logic;
+		tx_sel		: std_logic;
+		rx_sel		: std_logic;
+		sweep_sync	: std_logic;
+	end record;
+end package dds_pkg;
+
+
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.all;
 use IEEE.NUMERIC_STD.all;
 use work.helper_util.all;
+use work.dds_pkg.all;
 
 
 entity dds_wrapper is
@@ -20,10 +37,11 @@ entity dds_wrapper is
 		LUT_GRAD_PREC	: integer := 5;		-- number of databist stored in LUT for gradient (slope)
 		PHASE_WIDTH		: integer := 32;	-- number of bits of phase accumulator
 		LFSR_WIDTH		: integer := 32;	-- number of bits used for the LFSR/PNGR
-	   LFSR_POLY      : std_logic_vector := "111"; -- polynomial of the LFSR/PNGR
+		LFSR_POLY      : std_logic_vector := "111"; -- polynomial of the LFSR/PNGR
 		LFSR_SEED		: integer := 12364;	-- seed for LFSR
 		SCALE_WIDTH		: integer := 3;	-- number of bits for the scale factor (max = 1/(2^SCALE_WIDTH - 1))
-		OUT_WIDTH		: integer := 12		-- number of bits actually output (should be equal to DAC bits)
+		OUT_WIDTH		: integer := 12;		-- number of bits actually output (should be equal to DAC bits)
+		SPI_START_ADDR	: integer := 224
 	);
 	port(
 		ClkxCI				: in  std_logic; -- either MCLK2RX_pll_d (RX) or lmlclk (TX)
@@ -35,45 +53,33 @@ entity dds_wrapper is
 		--------- lime signals---------
 		mimo_en				: in  std_logic;
 		ddr_en				: in  std_logic;
-		ch_en					: in  std_logic_vector(1 downto 0);
+		ch_en				: in  std_logic_vector(1 downto 0);
+		-- spi
+		sdin				: in  std_logic;	-- Data in
+		sclk				: in  std_logic;	-- Data clock
+		sen					: in  std_logic;	-- Enable signal (active low)
+		sdout				: out std_logic;	-- Data out
+		-- reset
+		lreset				: in std_logic; 	-- Logic reset signal, resets logic cells only  (use only one reset)
+		mreset				: in std_logic; 	-- Memory reset signal, resets configuration memory only (use only one reset)
 		-------------------------------
-		
-		TaylorEnxSI			: in  std_logic;
-		
-		TruncDithEnxSI		: in std_logic;
-		
-		PhaseDithEnxSI		: in  std_logic;
-		PhaseDithMasksxSI	: in  std_logic_vector((PHASE_WIDTH - 1) downto 0);
-		
-		PhixDI				: in  std_logic_vector((PHASE_WIDTH - 1) downto 0);
-		
-		SweepEnxSI			: in  std_logic;
-		SweepUpDonwxSI		: in  std_logic;
-		SweepRatexDI		: in  std_logic_vector((PHASE_WIDTH - 1) downto 0);
-		SweepSyncxSO		: out std_logic;
-		
-		TopFTWxDI			: in  std_logic_vector((PHASE_WIDTH - 1) downto 0);		
-		BotFTWxDI			: in  std_logic_vector((PHASE_WIDTH - 1) downto 0);
-		
-		ScalexDI				: in  std_logic_vector((SCALE_WIDTH - 1) downto 0);
-		TxValidInvxSI		: in  std_logic;
-		RxValidInvxSI		: in  std_logic;
-		
-		
-		
-		
-		dds_data_h			: out std_logic_vector(OUT_WIDTH downto 0);
-		dds_data_l			: out std_logic_vector(OUT_WIDTH downto 0);
-		
-		--DDSRxValidxS		: out std_logic;
+		o_dds_ctl			: out t_dds_ctl;
+-- 		DDSEnablexSO		: out std_logic;
+-- 		DDSTxSelxSO			: out std_logic;
+-- 		DDSRxSelxSO			: out std_logic;
+-- 		SweepSyncxSO		: out std_logic;
 		
 		-- AXIS interface for receive part (mixer)
+-- 		o_dds_rx			: out t_maxis_cplx_out;
+-- 		i_dds_rx			: out t_maxis_cplx_in;
 		o_dds_rx_i			: out std_logic_vector((OUT_WIDTH - 1) downto 0);
 		o_dds_rx_q			: out std_logic_vector((OUT_WIDTH - 1) downto 0);
 		i_dds_rx_rdy		: in  std_logic;
 		o_dds_rx_vld		: out std_logic;
 		
 		-- AXIS interface for transpitter part (output to LMS7002)
+-- 		o_dds_tx			: out t_maxis_cplx_out;
+-- 		i_dds_tx			: out t_maxis_cplx_in;
 		o_dds_tx_i			: out std_logic_vector((OUT_WIDTH - 1) downto 0);
 		o_dds_tx_q			: out std_logic_vector((OUT_WIDTH - 1) downto 0);
 		i_dds_tx_rdy		: in  std_logic;
@@ -88,18 +94,41 @@ architecture arch of dds_wrapper is
 	--	Signals and types
 	------------------------------------------------------------------------------------------------
 
+	-- configuration signals
+	
+	signal TaylorEnxSI			: std_logic;
+	signal TruncDithEnxSI		: std_logic;
+	signal PhaseDithEnxSI		: std_logic;
+-- 	signal PhaseDithMasksxSI	: std_logic_vector((PHASE_WIDTH - 1) downto 0); -- set to zero?
+-- 	signal PhixDI				: std_logic_vector((PHASE_WIDTH - 1) downto 0);
+	signal SweepEnxSI			: std_logic;
+	signal SweepUpDonwxSI		: std_logic;
+	signal SweepRatexDI			: std_logic_vector((PHASE_WIDTH - 1) downto 0);
+	signal TopFTWxDI			: std_logic_vector((PHASE_WIDTH - 1) downto 0);		
+	signal BotFTWxDI			: std_logic_vector((PHASE_WIDTH - 1) downto 0);
+	signal ScalexDI				: std_logic_vector((SCALE_WIDTH - 1) downto 0);
+-- 	signal TxValidInvxSI		: std_logic;
+-- 	signal RxValidInvxSI		: std_logic;
+
+	signal DDSMixEnxS			: std_logic;
+	signal DDSTxSelxS			: std_logic;
+	signal DDSRxSelxS			: std_logic;
+
+	signal SweepSyncxS			: std_logic;
+	
 	-- syncronize inputs
-	signal SyncFTWxD				: std_logic_vector((PHASE_WIDTH - 1) downto 0);
+	signal SyncFTWxD			: std_logic_vector((PHASE_WIDTH - 1) downto 0);
 	signal SyncTaylorEnxS		: std_logic;
 	signal SyncTruncDithEnxS	: std_logic;
 	signal SyncPhaseDithEnxS	: std_logic;
 	signal SyncPhaseDithMasksxS: std_logic_vector((PHASE_WIDTH - 1) downto 0);
 	signal SyncScalexS			: std_logic_vector((SCALE_WIDTH - 1) downto 0);
-	signal SyncTxValidInvxS		: std_logic;
-	signal SyncRxValidInvxS		: std_logic;
+-- 	signal SyncTxValidInvxS		: std_logic;
+-- 	signal SyncRxValidInvxS		: std_logic;
 	
 	-- enable signal
 	signal EnablexS				: std_logic;
+	signal CfgEnablexS			: std_logic;
 	
 	-- sweep signals
 	signal SyncSweepEnxS			: std_logic;
@@ -144,47 +173,61 @@ begin
 	------------------------------------------------------------------------------------------------
 	--	Instantiate Components
 	------------------------------------------------------------------------------------------------
-	
 	sync_reg0 : entity work.sync_reg
 	port map (ClkxCI, '1', RstxRBI, RstxRBI_sync);
 	
-	sync_reg1 : entity work.sync_reg
-	port map (ClkxCI, '1', TaylorEnxSI, SyncTaylorEnxS);
 	
-	sync_reg2 : entity work.sync_reg
-	port map (ClkxCI, '1', TruncDithEnxSI, SyncTruncDithEnxS);
+	CFG0 : entity work.ddscfg
+	port map(
+		ClkxCI => ClkxCI,
+		------------------------------------------------------------------
+		-------------------- Lime Signals --------------------------------
+		------------------------------------------------------------------
+		-- Address and location of this module
+		-- Will be hard wired at the top level
+		maddress				=> std_logic_vector(to_unsigned(SPI_START_ADDR/32, 10)),
+		mimo_en				=> '1', -- MIMO enable, from TOP SPI (always 1)
 	
-	sync_reg3 : entity work.sync_reg
-	port map (ClkxCI, '1', PhaseDithEnxSI, SyncPhaseDithEnxS);
+		-- spi
+		sdin					=> sdin,
+		sclk					=> sclk,
+		sen					=> sen,
+		sdout					=> sdout,
+		-- reset
+		lreset				=> lreset,
+		mreset				=> mreset,
 	
-	sync_reg4 : entity work.sync_reg
-	port map (ClkxCI, '1', SweepEnxSI, SyncSweepEnxS);
-	
-	sync_reg5 : entity work.sync_reg
-	port map (ClkxCI, '1', SweepUpDonwxSI, SyncSweepUpDownxS);
-	
-	sync_reg6 : entity work.sync_reg
-	port map (ClkxCI, '1', TxValidInvxSI, SyncTxValidInvxS);
-	
-	sync_reg7 : entity work.sync_reg
-	port map (ClkxCI, '1', RxValidInvxSI, SyncRxValidInvxS);
-	
-	
-	bus_sync_reg0 : entity work.bus_sync_reg
-	generic map (32)
-	port map(ClkxCI, '1', SweepRatexDI, SyncSweepRatexD);
-	
-	bus_sync_reg1 : entity work.bus_sync_reg
-	generic map (32)
-	port map(ClkxCI, '1', TopFTWxDI, SyncTopFTWxD);
-	
-	bus_sync_reg2 : entity work.bus_sync_reg
-	generic map (32)
-	port map(ClkxCI, '1', BotFTWxDI, SyncBotFTWxD);
-	
-	bus_sync_reg3 : entity work.bus_sync_reg
-	generic map(SCALE_WIDTH)
-	port map(ClkxCI, '1', ScalexDI, SyncScalexD);
+		------------------------------------------------------------------
+		-------------------- User Signals --------------------------------
+		------------------------------------------------------------------
+-- 		DDSEnablexSO			=> DDSEnablexSO, -- output, TODO: merge into record
+-- 		DDSTxSelxSO				=> DDSTxSelxSO, -- output, TODO: merge into record
+-- 		DDSRxSelxSO				=> DDSRxSelxSO, -- output, TODO: merge into record
+-- 		DDSTaylorEnxSO			=> TaylorEnxSI,
+-- 		DDSTrDithEnxSO			=> TruncDithEnxSI,
+-- 		DDSPhDithEnxSO			=> PhaseDithEnxSI,
+-- 		DDSScaleOutxSO			=> ScalexDI,
+-- 		DDSSweepEnxSO			=> SweepEnxSI,
+-- 		DDSSweepUpDownxSO		=> SweepUpDonwxSI,
+-- 		DDSSweepRatexDO			=> SweepRatexDI,
+-- 		DDSTopFTWxDO			=> TopFTWxDI,
+-- 		DDSBotFTWxDO			=> BotFTWxDI,
+-- 		DDSMixEnxSO				=> DDSMixEnxSO -- output, TODO: merge into record
+
+		DDSEnablexSO			=> CfgEnablexS, -- output, TODO: merge into record
+		DDSTxSelxSO				=> DDSTxSelxS, -- output, TODO: merge into record
+		DDSRxSelxSO				=> DDSRxSelxS, -- output, TODO: merge into record
+		DDSTaylorEnxSO			=> SyncTaylorEnxS,
+		DDSTrDithEnxSO			=> SyncTruncDithEnxS,
+		DDSPhDithEnxSO			=> SyncPhaseDithEnxS,
+		DDSScaleOutxSO			=> SyncScalexD,
+		DDSSweepEnxSO			=> SyncSweepEnxS,
+		DDSSweepUpDownxSO		=> SyncSweepUpDownxS,
+		DDSSweepRatexDO		=> SyncSweepRatexD,
+		DDSTopFTWxDO			=> SyncTopFTWxD,
+		DDSBotFTWxDO			=> SyncBotFTWxD,
+		DDSMixEnxSO				=> DDSMixEnxS -- output, TODO: merge into record
+	);
 	
 	DDS0 : entity work.dds
 	generic map(
@@ -209,17 +252,14 @@ begin
 		SweepEnxSI			=> SyncSweepEnxS,
 		SweepUpDownxSI		=> SyncSweepUpDownxS,
 		SweepRatexDI		=> SyncSweepRatexD,
-		SweepSyncxSO		=> SweepSyncxSO,
+		SweepSyncxSO		=> SweepSyncxS,
 		TopFTWxDI			=> SyncTopFTWxD,
 		BotFTWxDI			=> SyncBotFTWxD,
---		FTWxDI				=> SyncBotFTWxD,
-		PhixDI				=> PhixDI,
-		ValidxSO				=> ValidxS,
+		PhixDI				=> x"00000000",
+		ValidxSO			=> ValidxS,
 		PhixDO				=> PhixD,
-		QxDO					=> FullScaleQxD,
-		IxDO					=> FullScaleIxD
---		QxDO					=> QxD,
---		IxDO					=> IxD
+		QxDO				=> FullScaleQxD,
+		IxDO				=> FullScaleIxD
 	);
 
 	
@@ -388,7 +428,7 @@ begin
 			QxDP			<= QxDN;
 			TxValidxSP	<= TxValidxSN;
  		end if;
- 	end process p_sync_registers;
+ 	end process;
 	
 
 	
@@ -396,10 +436,6 @@ begin
 	--	Combinatorical process (parallel logic)
 	------------------------------------------------------------------------------------------------
 	
-	--scale the DDS outputs by a factor of 1/ScalexDI
-	--QxD <= std_logic_vector(shift_right(signed(FullScaleQxD), to_integer(unsigned(ScalexDI))));
-	--IxD <= std_logic_vector(shift_right(signed(FullScaleIxD), to_integer(unsigned(ScalexDI))));
-
 	--------------------------------------------
 	-- ProcessName: p_comb_scale
 	-- This process implements two multiplier, used to scale the generated amplitued.
@@ -431,23 +467,13 @@ begin
 	------------------------------------------------------------------------------------------------
 	--	Output Assignment
 	------------------------------------------------------------------------------------------------
-	-- receive!!
-	--dds_data_h		<= ValidxS & QxD;
-	--dds_data_l		<= ValidxS & IxD;
+	-- configuration
+	o_dds_ctl.en			<= CfgEnablexS;
+	o_dds_ctl.mix_en		<= DDSMixEnxS;
+	o_dds_ctl.tx_sel		<= DDSTxSelxS;
+	o_dds_ctl.rx_sel		<= DDSRxSelxS;
+	o_dds_ctl.sweep_sync	<= SweepSyncxS;
 	
-	--dds_data_h	<= ValidxS & "000000000000"; -- imag part
-	--dds_data_l	<= ValidxS & "000000001111"; -- real part
-	-- 000000001111  -> reads as 240
-	
---	RxValidxS		<= SyncFifoOutxD(2*OUT_WIDTH) when SyncRxValidInvxS = '0' else not SyncFifoOutxD(2*OUT_WIDTH);
---	dds_rx_h			<= RxValidxS & SyncFifoOutxD((2*OUT_WIDTH - 1) downto OUT_WIDTH);
---	dds_rx_l			<= RxValidxS & SyncFifoOutxD((OUT_WIDTH-1) downto 0);
-	
-	--RxValidxS		<= ValidxS;
---	dds_rx_h			<= "0" & FullScaleIxD;
---	dds_rx_l			<= "0" & FullScaleQxD;
-	
-	--DDSRxValidxS	<= RxValidxS;
 	----------------------------------------------------------------------------
 	--TODO clean up until these are the only interfaces!!
 	
@@ -456,16 +482,9 @@ begin
 --	o_dds_rx_i			<= RdQxD((OUT_WIDTH - 1) downto 0);
 --	o_dds_rx_q			<= RdQxD((2*OUT_WIDTH - 1) downto OUT_WIDTH);
 	
-	--dds_rx_h			<= (others => '0');
-	--dds_rx_l			<= (others => '0');
-	
---	TxValidxSN		<= ValidxS when SyncTxValidInvxS = '0' else not ValidxS;
---	TxValidxSN		<= ValidxS;
+	-- axi stream in ClkxCI domain
 	o_dds_tx_vld		<= ValidxS;
 	o_dds_tx_i			<= IxDP;
 	o_dds_tx_q			<= QxDP;
 	------------------------------------------------------------------------
-	-- receive!!
-	dds_data_h		<= TxValidxSP & IxDP;
-	dds_data_l		<= TxValidxSP & QxDP;
 end arch;

@@ -39,7 +39,7 @@
 set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:LimeSDR_gateware/gui.tcl"
 set_global_assignment -name FAMILY "Cyclone IV E"
 set_global_assignment -name DEVICE EP4CE40F23C8
-set_global_assignment -name TOP_LEVEL_ENTITY lms7_dds_trx_top
+set_global_assignment -name TOP_LEVEL_ENTITY lms7_trx_top
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 15.0.0
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "15:20:53  APRIL 08, 2016"
 set_global_assignment -name LAST_QUARTUS_VERSION 15.1.0
@@ -792,15 +792,6 @@ set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to FX3_DQ[28]
 set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to FX3_DQ[29]
 set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to FX3_DQ[30]
 set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to FX3_DQ[31]
-
-set_global_assignment -name SEARCH_PATH src/symbols/
-set_global_assignment -name SEARCH_PATH LimeSDR_gateware/symbols/
-set_global_assignment -name TIMEQUEST_MULTICORNER_ANALYSIS ON
-set_global_assignment -name SMART_RECOMPILE ON
-
-
-
-
 set_global_assignment -name VHDL_FILE src/hold.vhd
 set_global_assignment -name VHDL_FILE src/CICDecimator/hdl/integrator.vhd
 set_global_assignment -name VHDL_FILE src/CICDecimator/hdl/downsampler.vhd
@@ -812,9 +803,7 @@ set_global_assignment -name VHDL_FILE src/dsp_radar/dc_removal.vhd
 set_global_assignment -name VHDL_FILE src/iq_iface/dds_iq2fifo.vhd
 set_global_assignment -name VHDL_FILE src/iq_iface/dds_fifo2iq.vhd
 set_global_assignment -name VHDL_FILE src/dsp_radar/radar_dsp_top.vhd
-set_global_assignment -name VHDL_FILE src/tx_path_top.vhd
 set_global_assignment -name VHDL_FILE src/dds_wrapper.vhd
-set_global_assignment -name SDC_FILE LimeSDR_gateware/LMS7002_timing.sdc
 set_global_assignment -name VHDL_FILE src/DDS/hdl/dds.vhd
 set_global_assignment -name VHDL_FILE src/DDS/hdl/taylor.vhd
 set_global_assignment -name VHDL_FILE src/DDS/hdl/noise_shaper.vhd
@@ -827,10 +816,37 @@ set_global_assignment -name VHDL_FILE src/DDS/hdl/dds_core.vhd
 set_global_assignment -name VHDL_FILE src/DDS/hdl/cplx_lut.vhd
 set_global_assignment -name VHDL_FILE src/DDS/hdl/cplx_grad_lut.vhd
 set_global_assignment -name VHDL_FILE src/ddscfg.vhd
+
+set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/tx_path_top/pct_separate/synth/pct_separate_fsm.vhd
+set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/tx_path_top/pct_separate/synth/one_pct_fifo.vhd
+set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/rx_path_top/smpl_cnt/synth/iq_smpl_cnt.vhd
 set_global_assignment -name QIP_FILE LimeSDR_gateware/lms_ctr/synthesis/lms_ctr.qip
 set_global_assignment -name SDC_FILE LimeSDR_gateware/FX3_timing.sdc
+set_global_assignment -name SDC_FILE LimeSDR_gateware/LMS7002_timing.sdc
 set_global_assignment -name SDC_FILE LimeSDR_gateware/lms7_trx_timing.sdc
 set_global_assignment -name QIP_FILE LimeSDR_gateware/ip/ddr2/ddr2.qip
+set_global_assignment -name SDC_FILE LimeSDR_gateware/Clock_groups.sdc
+set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/fx3/slaveFIFO5b/two_fifo_inst.vhd
+set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/tx_path_top/packets2data/synth/p2d_rd.vhd
+set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/fifo_transfer/synth/fifo_trnsf.vhd
+set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/spi/tstcfg_pkg.vhd
+set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/spi/tstcfg.vhd
+set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/packages/synth/FIFO_PACK.vhd
+set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/spi/periphcfg_pkg.vhd
+set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/spi/periphcfg.vhd
+set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/self_test/tst_top.vhd
+set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/spi/pll_ctrl.vhd
+set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/pll_top/pll_top.vhd
+set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/spi/pllcfg_pkg.vhd
+set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/spi/cfg_top.vhd
+set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/spi/fpgacfg_pkg.vhd
+set_global_assignment -name VHDL_FILE src/lms7_dds_trx_top.vhd
+set_global_assignment -name VHDL_FILE src/rxtx_top.vhd
+set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/general_periph/synth/general_periph_top.vhd
+set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/rx_path_top/smpl_cmp/synth/smpl_cmp.vhd
+set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/dyn_ps/synth/pll_ps_top.vhd
+set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/dyn_ps/synth/pll_ps_fsm.vhd
+set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/dyn_ps/synth/pll_ps.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/general/general_pkg.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/tx_path_top/pulse_gen/synth/pulse_gen.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/tx_path_top/fifo2diq/synth/txiq_ctrl.vhd
@@ -838,6 +854,7 @@ set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/tx_pll_top/synth/tx_p
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/rx_pll_top/synth/rx_pll_top.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/altera_inst/lms7002_ddout.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/tx_path_top/handshake_sync/synth/handshake_sync.vhd
+set_global_assignment -name VHDL_FILE src/tx_path_top.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/tx_path_top/tx_path/synth/sync_fifo_rw.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/tx_path_top/packets2data/synth/packets2data_top.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/tx_path_top/packets2data/synth/packets2data.vhd
@@ -857,7 +874,6 @@ set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/altera_inst/lms7002_d
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/altera_inst/fifo_inst.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/rx_path_top/smpl_cnt/synth/smpl_cnt.vhd
 set_global_assignment -name VHDL_FILE src/rx_path_top.vhd
-set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/rx_path_top/diq2fifo/synth/diq2fifo.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/rx_path_top/diq2fifo/synth/test_data_dd.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/rx_path_top/diq2fifo/synth/rxiq_siso_sdr.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/rx_path_top/diq2fifo/synth/rxiq_siso_ddr.vhd
@@ -866,6 +882,7 @@ set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/rx_path_top/diq2fifo/
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/rx_path_top/diq2fifo/synth/rxiq_mimo_ddr.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/rx_path_top/diq2fifo/synth/rxiq_mimo.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/rx_path_top/diq2fifo/synth/rxiq.vhd
+set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/rx_path_top/diq2fifo/synth/diq2fifo.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/rx_path_top/data2packets/synth/data2packets_top.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/rx_path_top/data2packets/synth/data2packets_fsm.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/rx_path_top/data2packets/synth/data2packets.vhd
@@ -873,8 +890,8 @@ set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/rx_path_top/bit_pack/
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/rx_path_top/bit_pack/synth/pack_48_to_64.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/rx_path_top/bit_pack/synth/bit_pack.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/general/gpio_ctrl_top.vhd
-set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/txiqmux/synth/txiq_tst_ptrn.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/txiqmux/synth/txiqmux.vhd
+set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/txiqmux/synth/txiq_tst_ptrn.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/general/busy_delay.vhd
 set_global_assignment -name QIP_FILE LimeSDR_gateware/software/lms_ctr_app/mem_init/meminit.qip
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/nios_cpu/nios_cpu.vhd
@@ -904,32 +921,25 @@ set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/reg_phase_shift/phase
 set_global_assignment -name QIP_FILE LimeSDR_gateware/ip/pll_reconfig_module/pll_reconfig_module.qip
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/data_manipulation/decompress.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/wfm_ram_buffer/sl_ctrl.vhd
-set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/dyn_ps/pll_ps_cntrl.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/pll_reconfig_ctrl/config_ctrl.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/spi/miso_mux.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/spi/mem_package.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/spi/mcfg32wm_fsm.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/spi/mcfg_components.vhd
-set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/fx3/slaveFIFO2b_stream.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/general/alive.vhd
-set_global_assignment -name BDF_FILE src/lms7_dds_trx_top.bdf
 set_global_assignment -name QIP_FILE LimeSDR_gateware/ip/ddo/ddrox1.qip
 set_global_assignment -name QIP_FILE LimeSDR_gateware/ip/pll/pll.qip
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/general/synchronizer.vhd
 set_global_assignment -name QIP_FILE LimeSDR_gateware/ip/fpga_pll/fpga_pll.qip
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/general/capture_signal.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/general/bus_synch.vhd
-set_global_assignment -name BDF_FILE LimeSDR_gateware/symbols/rx_synchronizers.bdf
-set_global_assignment -name BDF_FILE LimeSDR_gateware/symbols/tx_synchronizers.bdf
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/testing/fx3_fifo_data.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/pll_reconfig_ctrl/pll_reconfig_status.vhd
-set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/spi/pllcfg_top.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/spi/fpgacfg.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/general/my_sw.vhd
 set_global_assignment -name SIGNALTAP_FILE LimeSDR_gateware/signal_tap/debug.stp
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/tx_modules/rd_tx_fifo.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/self_test/ddr2_tester.vhd
-set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/self_test/tstcfg.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/general/FPGA_LED1_cntrl.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/general/FPGA_LED2_ctrl.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/self_test/clock_test.vhd
@@ -939,10 +949,12 @@ set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/self_test/singl_clk_w
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/self_test/transition_count.vhd
 set_global_assignment -name QIP_FILE LimeSDR_gateware/ip/txpll/txpll.qip
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/stream/stream_switch.vhd
-set_global_assignment -name BDF_FILE LimeSDR_gateware/symbols/pll_block_rx.bdf
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/general/sync_reg.vhd
 set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/general/gpio_ctrl.vhd
-set_global_assignment -name VHDL_FILE LimeSDR_gateware/src/spi/periphcfg.vhd
+
+
+
+
 
 
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
