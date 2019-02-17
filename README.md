@@ -9,18 +9,24 @@ git clone --recurse-submodules -j8 https://github.com/spr02/LimeDDS_GW.git
 ```
 
 ## Build
-Load the project file in Quartus (lms7_dds_trx.qpf) and then generate the bitstream. The LimeSDR-USB_lms7_dds_trx_HW_1.4.rbf which will be needed to progam the LimeSDR, it will be automatically generated when running generate bitsream and is saved to the [output_files](output_files) directory.
+Load the project file in Quartus (lms7_dds_trx.qpf) and then generate the bitstream. The bitfile 'LimeSDR-USB_lms7_dds_trx_HW_1.4.rbf', which will be needed to progam the LimeSDR, will be automatically generated when running generate bitsream and is saved to the [output_files](output_files) directory.
+
+Currently, line 111 in [src/DDS/hdl/dither.vhd](https://github.com/spr02/DDS/blob/aee4ea3802c6c7667cc91367ba4456cb10eb3cc5/hdl/dither.vhd#L111) needs to be changed to the following, for bitstream generation to work:
+```vhdl
+	constant MSB_POS : natural := 11; -- changed from 15 to 11
+```
 
 ## Run/Program
 You can either load the bitstream using LimeSuiteGUI or using the command line uitilty:
 
 ```sh
-LimeUtil --fpga=output_files/LimeSDR-USB_lms7_dds_trx_HW_1.4.rbf
+LimeUtil --fpga="output_files/LimeSDR-USB_lms7_dds_trx_HW_1.4.rbf"
 ```
 
 
 ## TODO
-- enable signal for DDS core
-- valid signal for DDS core
-- complex multiplier
-- module that generates iq sel signal according to mimo_en and i/q data
+- adapt axis to fifo word converter for two channels/mimo_en/...
+- add scale multiplier for output of CIC filter (or AGC)
+- add CIC compensating FIR filter
+- add another half band filter and decimation by factor of two
+
