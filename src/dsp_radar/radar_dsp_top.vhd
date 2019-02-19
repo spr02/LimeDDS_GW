@@ -139,7 +139,8 @@ begin
 		N	=> 4,
 		M	=> 1,
 		R	=> 64,
-		B	=> 16
+		Bin	=> 16,
+		Bout=> 16
 	)
 	port map(
 		ClkxCI		=> ClkxCI,
@@ -160,7 +161,8 @@ begin
 		N	=> 4,
 		M	=> 1,
 		R	=> 64,
-		B	=> 16
+		Bin	=> 16,
+		Bout=> 16
 	)
 	port map(
 		ClkxCI		=> ClkxCI,
